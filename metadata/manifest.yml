@@ -1,0 +1,112 @@
+Name: hadoop
+Cartridge-Short-Name: HADOOP
+Display-Name: Hadoop
+Description: "Hortonworks 2.1"
+#Description: "The Apache Hadoop software library is a framework that allows for the distributed processing of large data sets across clusters of computers using simple programming models"
+Version: '2.1'
+License: Apache
+License-Url: http://www.apache.org/licenses/LICENSE-2.0.html
+Vendor: Red Hat
+Cartridge-Version: 0.0.1
+Cartridge-Vendor: redhat
+Source-Url: http://github.com/kang2k/openshift-hdp21-hadoop.git
+Categories:
+  - service
+  - web_framework
+  - java
+Website: http://www.hortonworks.com
+Help-Topics:
+  "Developer Center": https://www.openshift.com/developers
+Cart-Data:
+  - Key: OPENSHIFT_HADOOP_LOG_DIR
+    Type: environment
+    Description: "Directory to store application log files."
+  - Key: OPENSHIFT_TMP_DIR
+    Type: environment
+    Description: "Directory to store application temporary files."
+  - Key: OPENSHIFT_REPO_DIR
+    Type: environment
+    Description: "Application root directory where application files reside. This directory is reset every time you do a git-push"
+  - Key: OPENSHIFT_APP_DNS
+    Type: environment
+    Description: "Fully qualified domain name for the application."
+  - Key: OPENSHIFT_APP_NAME
+    Type: environment
+    Description: "Application name"
+  - Key: OPENSHIFT_DATA_DIR
+    Type: environment
+    Description: "Directory to store application data files. Preserved across git-pushes. Not shared across gears."
+  - Key: OPENSHIFT_APP_UUID
+    Type: environment
+    Description: "Unique ID which identified the application. Does not change between gears."
+  - Key: OPENSHIFT_GEAR_UUID
+    Type: environment
+    Description: "Unique ID which identified the gear. This value changes between gears."
+Provides:
+  - hadoop-2.1
+  - "hadoop"
+  - "hadoop(version) = 2.1"
+  - "hadoop(version) >= 2.1"
+Publishes:
+  publish-hadoop-cluster:
+    Type: NET_TCP:hadoop-cluster-info
+  publish-hadoop-rm-rt-address:
+    Type: NET_TCP:hadoop-rm-rt-info
+  publish-hadoop-datanode-address:
+    Type: NET_TCP:hadoop-datanode-address-info
+  publish-hadoop-datanode-http-address:
+    Type: NET_TCP:hadoop-datanode-http-address-info
+Subscribes:
+  set-env:
+    Type: ENV:*
+    Required: false
+  set-doc-url:
+    Type: STRING:urlpath
+    Required: false
+  set-hadoop-cluster:
+    Type: NET_TCP:hadoop-cluster-info
+  set-hadoop-rm-rt-address:
+    Type: NET_TCP:hadoop-rm-rt-info
+  set-hadoop-datanode-address:
+    Type: NET_TCP:hadoop-datanode-address-info
+  set-hadoop-datanode-http-address:
+    Type: NET_TCP:hadoop-datanode-http-address-info
+Scaling:
+  Min: 1
+  Max: -1
+Endpoints:
+  - Private-IP-Name: IP
+    Private-Port-Name: HTTP_PORT
+    Private-Port: 8088
+    Public-Port-Name: HTTP_PROXY_PORT
+    Protocols:
+    - http
+    - ws
+    Options:
+      primary: true
+    Mappings:
+    - Frontend: ''
+      Backend: ''
+      Options:
+        websocket: true
+    - Frontend: /health
+      Backend: ''
+      Options:
+        health: true
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	HDFS_PORT
+    Private-Port:      	8020
+    Public-Port-Name:  	HDFS_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	RM_RT_PORT
+    Private-Port:      	8050
+    Public-Port-Name:  	RM_RT_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	DATANODE_ADDRESS_PORT
+    Private-Port:      	50010
+    Public-Port-Name:  	DATANODE_ADDRESS_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	DATANODE_HTTP_ADDRESS_PORT
+    Private-Port:      	50075
+    Public-Port-Name:  	DATANODE_HTTP_ADDRESS_PROXY_PORT
+Install-Build-Required: false

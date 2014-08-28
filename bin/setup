@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+
+echo "!!!!!!!!!!!!!!!!!!!!!!!! setup"
+
+case "$1" in
+  -v|--version)
+    version="$2"
+esac
+
+mkdir -p ${OPENSHIFT_HADOOP_DIR}/template
+

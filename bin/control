@@ -1,0 +1,117 @@
+#!/bin/bash -e
+
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!! control $1"
+
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+
+HADOOP_BIN_DIR=${OPENSHIFT_HADOOP_DIR}/bin
+
+cartridge_type="hadoop"
+version=2.1
+
+function build() {
+  echo "Building Hadoop"
+
+}
+
+function deploy() {
+  echo "Deploying Hadoop"
+  
+}
+
+function start() {
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Starting Hadoop"
+
+  HADOOP_CONF_DIR=${OPENSHIFT_HADOOP_DIR}/hadoop/etc/hadoop
+ 
+ 
+  # Check for running app
+  pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/slaves
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/yarn-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/mapred-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_HDFS_CLUSTER}/${OPENSHIFT_HADOOP_HDFS_CLUSTER}/g" ./etc/hadoop/hdfs-site.xml
+
+	if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}:8020/g" ./etc/hadoop/core-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_RM_RT_ADDRESS}/${OPENSHIFT_HADOOP_IP}:8050/g" ./etc/hadoop/yarn-site.xml
+
+		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start namenode 2>&1
+		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager 2>&1    	
+	        sbin/yarn-daemon.sh start proxyserver --config $HADOOP_CONF_DIR 2>&1
+                sbin/mr-jobhistory-daemon.sh start historyserver --config $HADOOP_CONF_DIR 2>&1
+
+		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start datanode 2>&1
+		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager 2>&1
+        else
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_HDFS_CLUSTER}/g" ./etc/hadoop/core-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_RM_RT_ADDRESS}/${OPENSHIFT_HADOOP_RM_RT_ADDRESS}/g" ./etc/hadoop/yarn-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_DATANODE_ADDRESS}/${OPENSHIFT_HADOOP_IP}:${OPENSHIFT_HADOOP_DATANODE_ADDRESS_PROXY_PORT}/g" ./etc/hadoop/hdfs-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_DATANODE_HTTP_ADDRESS}/${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_DATANODE_HTTP_ADDRESS_PROXY_PORT}/g" ./etc/hadoop/hdfs-site.xml
+
+		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start datanode 2>&1
+		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager 2>&1
+	fi
+  popd
+}
+
+function stop() {
+  	echo "Stopping Hadoop"
+
+	HADOOP_CONF_DIR=${OPENSHIFT_HADOOP_DIR}/hadoop/etc/hadoop
+  	
+ 	pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+        	if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+			sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs stop namenode 2>&1
+			sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR stop resourcemanager 2>&1
+			sbin/yarn-daemon.sh stop proxyserver --config $HADOOP_CONF_DIR 2>&1
+			sbin/mr-jobhistory-daemon.sh stop historyserver --config $HADOOP_CONF_DIR 2>&1
+		else
+			sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs stop datanode 2>&1
+			sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR stop nodemanager 2>&1
+		fi
+	popd 
+}
+
+function restart() {
+    echo "Restarting $cartridge_type cart"
+   
+  	stop
+  	
+  	start
+}
+
+function status() {
+   echo "Application is installed"
+}
+
+function reload() {
+    echo "Reloading $cartridge_type cart"
+    restart
+}
+
+# Clean up any log files
+function tidy() {
+  client_message "Emptying log dir: $OPENSHIFT_HADOOP_LOG_DIR"
+  shopt -s dotglob
+  rm -rf $OPENSHIFT_HADOOP_LOG_DIR/*
+}
+
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Control $1"
+
+case "$1" in
+  build)		build ;;
+  deploy)	    deploy ;;
+  start)     	start ;;
+  stop)      	stop ;;
+  restart)   	restart ;;
+  status)    	status ;;
+  reload)    	reload ;;
+  tidy)      	tidy ;;
+  *)         	exit 0
+esac
+
+

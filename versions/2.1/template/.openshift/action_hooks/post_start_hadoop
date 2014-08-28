@@ -1,0 +1,1 @@
+bin/hadoop jar ./hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.4.0.jar randomwriter out

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Exit on any errors
+set -e
+
+if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+	echo ${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_DATANODE_HTTP_ADDRESS_PROXY_PORT}
+fi
